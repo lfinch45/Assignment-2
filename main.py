@@ -1,5 +1,5 @@
 # Imports
-# import pyautogui
+import pyautogui
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.edge.service import Service
@@ -49,9 +49,14 @@ class OneHealthCareLogin:
         return driver
     
     
-    def signIn(driver, email, password, phoneNumber, businessName, streetAddress, city, state, zipCode, taxIDNum, taxProvider):
+    def providerSignIn(driver, email, password, phoneNumber, businessName, streetAddress, city, state, zipCode, taxIDNum, taxProvider):
         
         ### Signing in
+
+        WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "//button[contains(text(),'Sign in')]")))
+        driver.save_screenshot('screenshot_before_timeout.png')
+        pyautogui.scroll(-50)
+        driver.save_screenshot('screenshot_after_scroll.png')
         driver.find_element(By.XPATH, "//button[contains(text(),'Sign in')]").click()
 
         # Entering login credentials
@@ -85,40 +90,70 @@ class OneHealthCareLogin:
         ### Should be finished registering now
 
 
-
-
-
-
-
 # 3) Login into Outlook and open an email based on the subject and the sender
 # Provider public home
 # new_or_established.csv
 
 class OutlookHandling:
 
-    def logIn():
-        pass
+    def openOutlookBrowser(emailAddress):
+        # Opening outlook on a browser
+        pyautogui.hotkey("ctrl", "t")
+        sleep(1)
+        pyautogui.write("outlook.com")
+        pyautogui.hotkey("enter")
+        sleep(1)
+
+        # Signing in
+        sign_in_button = pyautogui.locateCenterOnScreen("outlook_signin_icon.png", confidence=0.9)
+        pyautogui.moveTo(sign_in_button, 1)
+        pyautogui.click()
+        pyautogui.hotkey("enter")
+
+        pyautogui.write(emailAddress)
+        pyautogui.hotkey("enter")
+
     
-    def openEmail(subject, sender):
+    def openOutlookApp():
+        # Opening outlook through the app instead of through a browser
+        search_bar = pyautogui.locateCenterOnScreen("windows_searchbar_icon.png", confidence=0.8)
+        pyautogui.moveTo(search_bar, 1)
+        pyautogui.click()
+        pyautogui.write("outlook")
+        pyautogui.hotkey("enter")
+
+
+
+    def openEmail(sender, subject):
         """
+        Purpose: Opening an email based on the subject and the sender by searching in the searchbar
         Parameter 1: subject of email
         Parameter 2: sender of email
         Return: None
         """
-        pass
+        outlook_searchbar = pyautogui.locateCenterOnScreen("outlook_searchbar.png", confidence=0.9)
+        pyautogui.moveTo(outlook_searchbar, 1)
+        pyautogui.click()
+        pyautogui.write(sender + subject)
+        pyautogui.hotkey("enter")
 
 
 
 def main():
-    df = csvHandling.getDF("new_or_established 1.csv")
-    # print(df.dtypes)
-    for index, row in df.iterrows():
-        print(row['location'])
+    ### 1
+    # df = csvHandling.getDF("new_or_established 1.csv")
+    # for index, row in df.iterrows():
+    #     print(row['location'])
+
     
-    # item1 = df.iloc[1, 1]
-    # item2 = df.iloc[7, 1]
-    # print(type(item1))
-    # print(type(item2))
+    ### 2
+    driver = OneHealthCareLogin.getDriver("https://provider.umr.com/")
+    OneHealthCareLogin.providerSignIn(driver, "lukefinch45@gmail.com", "Basketball23$", 2243016394, "Luke", "2929 Southwestern Blvd", "Dallas", "TX", 75225, 12345, "JohnDoe")
+
+
+    ### 3
+    # OutlookHandling.openOutlookApp()
+    # OutlookHandling.openEmail("Kelly Long", "Compliance Update : Patient Data Security: Upholding Integrity as a HIPAA Priority.")
 
 
 if __name__ == "__main__":
