@@ -4,7 +4,6 @@ import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.edge.service import Service
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -24,22 +23,27 @@ class csvHandling:
         Parameter 2: any patient name from the file
         Return: String "Established" or "New Patient"
         """
-        patientDF = df[df['name'] == patientName]
-
-        established = False
         
-        for index, row in patientDF.iterrows(): # Loops through each row
-            currentLoc = row['location']
-            nextLoc = row['location'][index + 1]
+        # Data manipulation
+        df['date'] = pd.to_datetime(df['date'])
+        patientDF = df[df['name'] == patientName]
+        patientDF = patientDF.sort_values(by='date', ascending=False)
+        patientDF = patientDF.sort_values(by='location')
 
-            currentDate = int(row['date'][6:])
-            earliestDate = int(row['date'][6:])
+        # Iterating through new df
+        established = False
+        for i in range(len(patientDF) - 1):  # Loop through each row, except the last one
+            currentLoc = patientDF.iloc[i]['location']
+            nextLoc = patientDF.iloc[i + 1]['location']  # Access next row's location
 
-            for index, row in patientDF[currentLoc].iterrows(): # Loops through each row with same location
+            currentDate = patientDF.iloc[i]['date'].year
+            earliestDate = patientDF.iloc[i + 1]['date'].year
+
+            for index, row in patientDF[patientDF['location'] == currentLoc].iterrows():
                 if currentLoc != nextLoc:
-                    earliestDate = int(row['date'][6:])
+                    earliestDate = row['date'].year
 
-            if currentDate - earliestDate <= 3 and row['status'] != "cancelled":
+            if currentDate - earliestDate <= 3 and patientDF.iloc[i]['status'] != "cancelled":
                 established = True
                 break
 
@@ -62,24 +66,22 @@ class OneHealthCareLogin:
     def providerSignIn(driver, email, password, phoneNumber, businessName, streetAddress, city, state, zipCode, taxIDNum, taxProvider):
         
         ### Signing in
+        driver.maximize_window()
+        WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "//a[contains(@href, 'https://identity.onehealthcareid.com')]")))
+        driver.find_element(By.XPATH, "//a[contains(@href, 'https://identity.onehealthcareid.com')]").click()
         
-        # Scrolling down so computer can see full "Sign in" element
-        pyautogui.moveTo(1900, 500) # Move mouse to scroll bar
-        pyautogui.mouseDown()
-        pyautogui.moveTo(1900, 800, duration=0.5)
-        pyautogui.mouseUp
-        
-        # WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, "//button[contains(text(),'Sign in')]")))
-        # driver.save_screenshot('screenshot_before_timeout.png')
-        # driver.save_screenshot('screenshot_after_scroll.png')
-        driver.find_element(By.XPATH, "//button[contains(text(),'Sign in')]").click()
-
         # Entering login credentials
-        WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.ID, "user_name")))
+
+        # Getting the following message when taken to the Sign In screen:
+        # [6536:23296:0618/102450.071:ERROR:socket_manager.cc(142)] Failed to resolve address for aa.online-metrix.net., errorcode: -105
+        # [6536:23296:0618/102450.072:ERROR:socket_manager.cc(142)] Failed to resolve address for aa.online-metrix.net., errorcode: -105
+        # [6536:23296:0618/102450.146:ERROR:socket_manager.cc(142)] Failed to resolve address for aa.online-metrix.net., errorcode: -105
+        WebDriverWait(driver, 2).until(EC.visibility_of_element_located((By.ID, "username")))
         driver.find_element(By.ID, "username").send_keys(email)
+
         driver.find_element(By.ID, "login-pwd").send_keys(password)
 
-        driver.find_element(By.XPATH, "//button[contains(text(),'Continue')]").click()
+        driver.find_element(By.ID, "btnLogin").click()
 
         ### Entering info
         WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.NAME, "form.providerPhoneNumberFirstPart")))
@@ -93,14 +95,16 @@ class OneHealthCareLogin:
         driver.find_element(By.NAME, "form.zipCode").send_keys(str(zipCode))
     
 
-        driver.find_element(By.XPATH, "//button[contains(text(),'Next')]").click()
+        # driver.find_element(By.XPATH, "//button[contains(text(),'Next')]").click()
+        driver.find_element(By.ID, "continueButton").click()
 
         # Entering tax info
         WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.NAME, "taxIdNum")))
         driver.find_element(By.NAME, "taxIdNum").send_keys(str(taxIDNum))
         driver.find_element(By.NAME, "taxIdDesc").send_keys(taxProvider)
 
-        driver.find_element(By.XPATH, "//button[contains(text(),'Submit')]").click()
+        # driver.find_element(By.XPATH, "//button[contains(text(),'Submit')]").click()
+        driver.find_element(By.ID, "continueButtonSubmit").click()
 
         ### Should be finished registering now
 
@@ -177,8 +181,9 @@ class OutlookHandling:
 
 def main():
     ### 1
-    # df = csvHandling.getDF("new_or_established 1.csv")
-    # csvHandling.estOrNew(df, "Ana")
+    df = csvHandling.getDF("new_or_established 1.csv")
+    verdict = csvHandling.estOrNew(df, "Ana")
+    print(verdict)
 
     
     ### 2
@@ -187,8 +192,8 @@ def main():
     
 
     ### 3
-    OutlookHandling.openOutlookApp()
-    OutlookHandling.openEmailApp("Kelly Long", "Compliance Update : Patient Data Security: Upholding Integrity as a HIPAA Priority.")
+    # OutlookHandling.openOutlookApp()
+    # OutlookHandling.openEmailApp("Kelly Long", "Compliance Update : Patient Data Security: Upholding Integrity as a HIPAA Priority.")
     
     # OutlookHandling.openOutlookBrowser("lfinch@joriehc.com")
     # OutlookHandling.openEmailBrowser("Kelly Long", "Compliance Update : Patient Data Security: Upholding Integrity as a HIPAA Priority.")
