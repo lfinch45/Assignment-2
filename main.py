@@ -43,6 +43,7 @@ class csvHandling:
                 if currentLoc != nextLoc:
                     earliestDate = row['date'].year
 
+            # print(str(currentDate) + " and " + str(earliestDate))
             if currentDate - earliestDate <= 3 and patientDF.iloc[i]['status'] != "cancelled":
                 established = True
                 break
@@ -76,7 +77,7 @@ class OneHealthCareLogin:
         # [6536:23296:0618/102450.071:ERROR:socket_manager.cc(142)] Failed to resolve address for aa.online-metrix.net., errorcode: -105
         # [6536:23296:0618/102450.072:ERROR:socket_manager.cc(142)] Failed to resolve address for aa.online-metrix.net., errorcode: -105
         # [6536:23296:0618/102450.146:ERROR:socket_manager.cc(142)] Failed to resolve address for aa.online-metrix.net., errorcode: -105
-        WebDriverWait(driver, 2).until(EC.visibility_of_element_located((By.ID, "username")))
+        WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.ID, "username")))
         driver.find_element(By.ID, "username").send_keys(email)
 
         driver.find_element(By.ID, "login-pwd").send_keys(password)
@@ -113,9 +114,9 @@ class OneHealthCareLogin:
 # Provider public home
 # new_or_established.csv
 
-class OutlookHandling:
+class BrowserOutlookHandling:
 
-    def openOutlookBrowser(emailAddress):
+    def openOutlook(emailAddress):
         # Opening outlook on a browser
         edge_browser = pyautogui.locateCenterOnScreen(r"C:\Users\LukeFinch\OneDrive - Jorie Healthcare\Pictures\Screenshots\Screenshot 2024-06-17 222915.png", confidence=0.9)
         pyautogui.moveTo(edge_browser)
@@ -138,7 +139,7 @@ class OutlookHandling:
         pyautogui.write(emailAddress)
         pyautogui.hotkey("enter")
 
-    def openEmailBrowser(sender, subject):
+    def openEmail(sender, subject):
         """
         Purpose: Opening an email based on the subject and the sender by searching in the searchbar
         Parameter 1: subject of email
@@ -153,7 +154,9 @@ class OutlookHandling:
         pyautogui.hotkey("enter")
 
     
-    def openOutlookApp():
+class AppOutlookHandling:
+
+    def openOutlook():
         # Opening outlook through the app instead of through a browser
         search_bar = pyautogui.locateCenterOnScreen(r"C:\Users\LukeFinch\OneDrive - Jorie Healthcare\Desktop\snippets\windows_searchbar_icon.png", confidence=0.8)
         pyautogui.moveTo(search_bar)
@@ -163,7 +166,7 @@ class OutlookHandling:
 
 
 
-    def openEmailApp(sender, subject):
+    def openEmail(sender, subject):
         """
         Purpose: Opening an email based on the subject and the sender by searching in the searchbar
         Parameter 1: subject of email
@@ -181,9 +184,9 @@ class OutlookHandling:
 
 def main():
     ### 1
-    df = csvHandling.getDF("new_or_established 1.csv")
-    verdict = csvHandling.estOrNew(df, "Ana")
-    print(verdict)
+    # df = csvHandling.getDF("new_or_established 1.csv")
+    # verdict = csvHandling.estOrNew(df, "Ana")
+    # print(verdict)
 
     
     ### 2
@@ -192,11 +195,11 @@ def main():
     
 
     ### 3
-    # OutlookHandling.openOutlookApp()
-    # OutlookHandling.openEmailApp("Kelly Long", "Compliance Update : Patient Data Security: Upholding Integrity as a HIPAA Priority.")
-    
-    # OutlookHandling.openOutlookBrowser("lfinch@joriehc.com")
-    # OutlookHandling.openEmailBrowser("Kelly Long", "Compliance Update : Patient Data Security: Upholding Integrity as a HIPAA Priority.")
+    BrowserOutlookHandling.openOutlook("lfinch@joriehc.com")
+    BrowserOutlookHandling.openEmail("Kelly Long", "Compliance Update : Patient Data Security: Upholding Integrity as a HIPAA Priority.")
+
+    AppOutlookHandling.openOutlook("lfinch@joriehc.com")
+    AppOutlookHandling.openEmail("Kelly Long", "Compliance Update : Patient Data Security: Upholding Integrity as a HIPAA Priority.")
 
 
 if __name__ == "__main__":
